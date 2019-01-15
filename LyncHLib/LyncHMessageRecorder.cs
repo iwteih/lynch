@@ -64,8 +64,23 @@ namespace LyncHLib
         {
             if (lyncCLient == null)
             {
-                lyncCLient = LyncClient.GetClient();
-                lyncCLient.ConversationManager.ConversationAdded += ConversationManager_ConversationAdded;
+                // occasionally, LyncClient.GetClient() will throw ClientNotFoundException, though lync process is up
+                int retry = 0;
+                while (retry < 5)
+                {
+                    try
+                    {
+                        lyncCLient = LyncClient.GetClient();
+                        lyncCLient.ConversationManager.ConversationAdded += ConversationManager_ConversationAdded;
+                        break;
+                    }
+                    catch (Exception exp)
+                    {
+                        retry++;
+                        logger.Error(string.Format("LyncClient.GetClient error, retry number {0}", retry), exp);
+                    }
+                    System.Threading.Thread.Sleep(1000);
+                }
             }
         }
 
